@@ -8,11 +8,10 @@ def MCD_recursivo(a, b):
     #? Paso recursivo: el divisor pasa a ser el dividendo, y el residuo pasa a ser el divisor
     else:
 
-        #q = a // b
-        #r = a % b
-        #print(f"   →  {a} = {b}({q}) + {r}")
-        #return MCD_recursivo(b,r)
-        return MCD_recursivo(b, a % b)
+        q = a // b
+        r = a % b
+        print(f"   →  {a} = {b}({q}) + {r}")
+        return MCD_recursivo(b,r)
 
 print("------ Calculadora de MCD (Algoritmo de Euclides) ------")
 num1 = int(input("Inserte el primer número (a): \n → "))

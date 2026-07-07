@@ -15,7 +15,7 @@ m = int(input("Por favor deme el valor de M \n → "))
 #? Obtenemos el MCD y los coeficientes mágicos
 mcd, x0, y0 = euclides_extendido(a, m)
 
-# Corrección: El MCD debe dividir a 'b'
+#? MCD divide a b
 if b % mcd != 0:
     print("Lo siento, la congruencia no tiene solución.")
 else:
