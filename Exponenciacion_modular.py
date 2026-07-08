@@ -18,4 +18,4 @@ def exponenciacion_modular(base, exponente, modulo):
     return resultado
 
 print("Probando: 3^11 mod 7")
-print("Resultado:", exponenciacion_modular(3, 11, 7))
+print("Resultado:", exponenciacion_modular(23, 60, 70))
