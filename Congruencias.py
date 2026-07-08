@@ -3,7 +3,7 @@ def euclides_extendido(a, b):
     if a == 0:
         return b, 0, 1
     else:
-        mcd, x, y = euclides_extendido(b % a, a)
+        mcd, x, y = euclides_extendido(b % a, a)  #* Axel y joel
         return mcd, y - (b // a) * x, x
 
 print("Bienvenido al solucionador de congruencias (ax ≡ b mod m)")
@@ -15,8 +15,8 @@ m = int(input("Por favor deme el valor de M \n → "))
 #? Obtenemos el MCD y los coeficientes mágicos
 mcd, x0, y0 = euclides_extendido(a, m)
 
-#? MCD divide a b
-if b % mcd != 0:
+#? MCD divide a b          
+if b % mcd != 0: #* Fernando y Ale
     print("Lo siento, la congruencia no tiene solución.")
 else:
     #? Calculamos la solución principal

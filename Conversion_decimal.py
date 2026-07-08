@@ -1,7 +1,7 @@
 numero_binario = input("Por favor inserte el numero binario que desea convertir: \n → ")
 
 #? 1. Verificamos si el usuario puso un signo negativo al inicio
-es_negativo = False
+es_negativo = False                       #* Ale y joel
 if numero_binario[0] == "-":
     es_negativo = True
     #? ignorarmos el - si es que el numero es negativo
@@ -13,8 +13,8 @@ numero_binario_volteado = numero_binario[::-1]
 decimal_acumulado = 0 
 
 #?Conversion a decimal
-for i in range(len(numero_binario_volteado)):
-    #? Convetimos la cadena en numero para tener el valor decimal
+for i in range(len(numero_binario_volteado)): #* Fernando y Axel
+    #? Convetimos la cadena en numero para tener el valor decimal 
     bit = int(numero_binario_volteado[i])
     
     #? si el numero es 1 entonces aplicamos la potencia correspondiente en i
