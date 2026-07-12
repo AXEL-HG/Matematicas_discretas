@@ -48,7 +48,7 @@ if __name__ == '__main__':
     print(f"→ Guarda tu Clave Privada en secreto: {privada}\n")
     
     #? 3. Pega aquí el arreglo de números que te devuelva el script del cliente
-    mensaje_recibido_del_cliente = [] 
+    mensaje_recibido_del_cliente = [3183, 1941, 1450, 248, 1764, 1120, 2110, 717, 1941]
     
     if mensaje_recibido_del_cliente:
         texto_limpio = desencriptar(privada, mensaje_recibido_del_cliente)

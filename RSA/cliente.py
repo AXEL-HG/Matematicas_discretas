@@ -16,7 +16,7 @@ if __name__ == '__main__':
     print("------------- LADO DEL CLIENTE -------------")
     
     #? 1. Pega aquí EXACTAMENTE la tupla que generó el receptor.py
-    clave_publica_del_receptor = (0, 0) 
+    clave_publica_del_receptor = (3233, 2533) 
     
     #? 2. El mensaje que deseas enviar
     mensaje = "HolaMundo"
