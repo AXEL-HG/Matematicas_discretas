@@ -1,63 +1,52 @@
-"""
-Este es el programa de la persona B ("el cliente") 
-"""
-
-import secrets
-
-from elgamal_comun import (
-    es_letra,
-    letra_a_codigo,
-    guardar_json,
-    leer_json,
-)
-
-ARCHIVO_CLAVE_PUBLICA = "clave_publica.json"
-ARCHIVO_MENSAJE_CIFRADO = "mensaje_cifrado.json"
+import random
 
 
-def encriptar_mensaje(mensaje, p, alpha, a):
+def cuadrados_sucesivos(base, exponente, modulo):
+    #?se ocupa el algoritmo de cuadrados sucesivos para calcular potencias muy
+    #?grandes con ayuda de hacerlos binarios (igual que en nuestro RSA)
+    resultado = 1
+    base = base % modulo
 
-    #? ii. k aleatorio, 1 <= k <= p-2, y gamma = alpha^k (mod p)
-    k = secrets.randbelow(p - 2) + 1
-    gamma = pow(alpha, k, p)
-    a_k = pow(a, k, p)   #? a^k (mod p), se reutiliza para cada bloque
+    while exponente > 0:
+        if (exponente % 2) == 1:
+            resultado = (resultado * base) % modulo
 
-    bloques = []
-    for c in mensaje:
-        if es_letra(c):
-            b = letra_a_codigo(c)          #?bloque b < 52 < p
-            beta = (a_k * b) % p            #? beta = a^k * b (mod p)
-            bloques.append({"tipo": "cifrado", "beta": beta})
-        else:
-            #? Se cifran letras mayúsculas, minúsculas y el espacio;
-            #? lo demás (dígitos, signos, etc.) viaja sin cifrar.
-            bloques.append({"tipo": "literal", "valor": c})
+        exponente = exponente // 2
+        base = (base * base) % modulo
 
-    return {"gamma": gamma, "bloques": bloques}
+    return resultado
 
 
-def main():
-    print("=== ElGamal - Cliente (persona B) ===")
-    try:
-        clave_publica = leer_json(ARCHIVO_CLAVE_PUBLICA)
-    except FileNotFoundError:
-        print(f"No se encontro '{ARCHIVO_CLAVE_PUBLICA}'.")
-        print("Pide al propietario que genere y comparta su clave publica.")
-        return
-
-    p = clave_publica["p"]
-    alpha = clave_publica["alpha"]
-    a = clave_publica["a"]
-    print(f"Clave publica del propietario: (p, alpha, a) = ({p}, {alpha}, {a})")
-
-    mensaje = input("Escribe el mensaje a cifrar: ")
-
-    cifrado = encriptar_mensaje(mensaje, p, alpha, a)
-    guardar_json(cifrado, ARCHIVO_MENSAJE_CIFRADO)
-
-    print(f"Mensaje cifrado y guardado en '{ARCHIVO_MENSAJE_CIFRADO}'.")
-    print("Envia ese archivo al propietario para que lo desencripte.")
+def es_letra(c):
+    #?solo ciframos mayusculas, minusculas y el espacio; todo lo demas
+    #?(numeros, signos de puntuacion, etc.) viaja sin cifrar
+    return ('A' <= c <= 'Z') or ('a' <= c <= 'z') or c == ' '
 
 
-if __name__ == "__main__":
-    main()
+p = int(input("Ingresa p (clave publica): "))
+alpha = int(input("Ingresa alpha (clave publica): "))
+a = int(input("Ingresa a (clave publica): "))
+
+mensaje = input("Escribe el mensaje a cifrar: ")
+
+k = random.randint(1, p - 2)  #?numero aleatorio secreto, se usa una sola vez y se descarta
+gamma = cuadrados_sucesivos(alpha, k, p)  #?gamma = alpha^k mod p, se manda una sola vez para todo el mensaje
+a_k = cuadrados_sucesivos(a, k, p)  #?a^k mod p, se reutiliza para cifrar cada letra del mensaje
+
+bloques = []
+for letra in mensaje:
+    if es_letra(letra):
+        b = ord(letra)  #?el bloque es directamente el codigo ASCII de la letra o el espacio
+        beta = (a_k * b) % p
+        bloques.append(str(beta))
+    else:
+        bloques.append("L" + letra)  #?caracter que no es letra ni espacio, viaja sin cifrar
+
+texto = ""
+for bloque in bloques:
+    texto = texto + bloque + " "
+
+print("")
+print("Mensaje cifrado, dale esto al propietario:")
+print("gamma =", gamma)
+print(texto)

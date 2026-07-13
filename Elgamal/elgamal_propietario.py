@@ -1,112 +1,142 @@
-"""
-elgamal_propietario.py
------------------------
-Este es el programa de la persona A ("el propietario"):
-quien desea RECIBIR mensajes cifrados.
-
-  A elige un primo (grande) p, una raíz primitiva alpha de p y un
-  exponente e con 1 <= e <= p-1, y calcula a := alpha^e (mod p).
-    - La clave pública es (p, alpha, a)  -> se publica/comparte
-    - La parte secreta es el exponente e -> NUNCA se comparte
-
-Y en el paso 3, para desencriptar un mensaje recibido E(b) = (gamma, beta):
-    gamma^(-e) := gamma^(p-1-e) (mod p)
-    b := gamma^(-e) * beta (mod p)
-
-Uso:
-    1) Ejecutar este script una vez para generar las claves
-       (crea clave_publica.json y clave_privada.json).
-    2) Compartir clave_publica.json con el cliente (elgamal_cliente.py).
-    3) Cuando el cliente genere mensaje_cifrado.json, volver a ejecutar
-       este script (opción 2) para desencriptarlo.
-"""
-
-from elgamal_comun import (
-    TAM_ALFABETO,
-    codigo_a_letra,
-    es_primo,
-    primo_aleatorio,
-    raiz_primitiva,
-    guardar_json,
-    leer_json,
-)
-
-ARCHIVO_CLAVE_PUBLICA = "clave_publica.json"
-ARCHIVO_CLAVE_PRIVADA = "clave_privada.json"
-ARCHIVO_MENSAJE_CIFRADO = "mensaje_cifrado.json"
+import random
 
 
-def generar_claves():
-    """Paso 1 del libro: genera (p, alpha, a) públicos y e secreto."""
-    # p debe ser mayor que TAM_ALFABETO (52) para que cada bloque b < p.
-    # Usamos un rango moderado para que el ejemplo corra rápido; para uso
-    # real se usaría un primo mucho más grande.
-    p = primo_aleatorio(1000, 5000)
-    alpha = raiz_primitiva(p)
-    e = secrets_randbelow_1_a_pmenos1(p)
-    a = pow(alpha, e, p)
+def criba_eratostenes(limite):
+    #? Regresa la lista de todos los primos <= limite. Se van tachando los
+    #? multiplos de cada primo que se encuentra, hasta llegar a 'limite'.
+    if limite < 2:
+        return []
 
-    clave_publica = {"p": p, "alpha": alpha, "a": a}
-    clave_privada = {"e": e}
+    es_primo_lista = [True] * (limite + 1)
+    es_primo_lista[0] = False
+    es_primo_lista[1] = False
 
-    guardar_json(clave_publica, ARCHIVO_CLAVE_PUBLICA)
-    guardar_json(clave_privada, ARCHIVO_CLAVE_PRIVADA)
+    i = 2
+    while i * i <= limite:
+        if es_primo_lista[i]:
+            multiplo = i * i
+            while multiplo <= limite:
+                es_primo_lista[multiplo] = False
+                multiplo = multiplo + i
+        i = i + 1
 
-    print("Claves generadas correctamente.")
-    print(f"  Clave publica  (p, alpha, a) = ({p}, {alpha}, {a})")
-    print(f"    -> guardada en '{ARCHIVO_CLAVE_PUBLICA}' (compartir con el cliente)")
-    print(f"  Clave secreta  e = {e}")
-    print(f"    -> guardada en '{ARCHIVO_CLAVE_PRIVADA}' (NO compartir, solo el propietario la usa)")
-
-
-def secrets_randbelow_1_a_pmenos1(p):
-    """Genera e con 1 <= e <= p-1, como pide el libro."""
-    import secrets
-    return secrets.randbelow(p - 1) + 1
-
-
-def desencriptar_mensaje():
-    try:
-        clave_publica = leer_json(ARCHIVO_CLAVE_PUBLICA)
-        clave_privada = leer_json(ARCHIVO_CLAVE_PRIVADA)
-        cifrado = leer_json(ARCHIVO_MENSAJE_CIFRADO)
-    except FileNotFoundError as err:
-        print(f"Falta un archivo necesario: {err.filename}")
-        return
-
-    p = clave_publica["p"]
-    e = clave_privada["e"]
-    gamma = cifrado["gamma"]
-
-    gamma_inv_e = pow(gamma, p - 1 - e, p)
-
-    texto_plano = []
-    for bloque in cifrado["bloques"]:
-        if bloque["tipo"] == "cifrado":
-            beta = bloque["beta"]
-            b = (gamma_inv_e * beta) % p          # recupera el bloque b
-            texto_plano.append(codigo_a_letra(b))  # bloque b -> letra
-        else:  # "literal": caracter que no era letra, va sin cifrar
-            texto_plano.append(bloque["valor"])
-
-    mensaje = "".join(texto_plano)
-    print("Mensaje desencriptado:")
-    print(f"  {mensaje}")
-    return mensaje
+    primos = []
+    numero = 2
+    while numero <= limite:
+        if es_primo_lista[numero]:
+            primos.append(numero)
+        numero = numero + 1
+    return primos
 
 
-def menu():
-    print("=== ElGamal - Propietario (persona A) ===")
-    print("1) Generar par de claves (publica/privada)")
-    print("2) Desencriptar mensaje recibido (mensaje_cifrado.json)")
-    opcion = input("Elige una opcion (1/2): ").strip()
-    if opcion == "1":
-        generar_claves()
-    elif opcion == "2":
-        desencriptar_mensaje()
+def es_primo(numero):
+    #? Comprobamos si 'numero' es primo generando la Criba de Eratostenes
+    #? hasta ese numero y viendo si quedo en la lista de primos.
+    if numero < 2:
+        return False
+    primos = criba_eratostenes(numero)
+    return numero in primos
+
+
+def factorizar(numero):
+    #? Separa 'numero' en sus factores primos (division de prueba). Esto se
+    #? usa nada mas para poder buscar la raiz primitiva de p.
+    factores = []
+    d = 2
+    m = numero
+    while d * d <= m:
+        while m % d == 0:
+            if d not in factores:
+                factores.append(d)
+            m = m // d
+        d = d + 1
+    if m > 1 and m not in factores:
+        factores.append(m)
+    return factores
+
+
+def cuadrados_sucesivos(base, exponente, modulo):
+    #?se ocupa el algoritmo de cuadrados sucesivos para calcular potencias muy
+    #?grandes con ayuda de hacerlos binarios (igual que en nuestro RSA)
+    resultado = 1
+    base = base % modulo
+
+    while exponente > 0:
+        if (exponente % 2) == 1:
+            resultado = (resultado * base) % modulo
+
+        exponente = exponente // 2
+        base = (base * base) % modulo
+
+    return resultado
+
+
+def raiz_primitiva(p):
+    #? Busca automaticamente un 'alpha' que sea raiz primitiva de p, para que
+    #? el usuario no tenga que calcularla a mano (igual que buscamos 'e' solo
+    #? en RSA). Un alpha es raiz primitiva si, para cada factor primo q de
+    #? p-1, se cumple que alpha^((p-1)/q) NO da 1 (mod p).
+    factores_p_menos_1 = factorizar(p - 1)
+    alpha = 2
+    while alpha < p:
+        es_raiz = True
+        for q in factores_p_menos_1:
+            if cuadrados_sucesivos(alpha, (p - 1) // q, p) == 1:
+                es_raiz = False
+                break
+        if es_raiz:
+            return alpha
+        alpha = alpha + 1
+    return None
+
+
+#?elegir el primo p (parte de la clave publica). Tiene que ser mayor a 122,
+#?que es el codigo ASCII de 'z', la letra mas alta que vamos a cifrar
+p = 0
+while p <= 122:
+    p = int(input("Ingresa un numero primo p (mayor a 122): "))
+
+    if not es_primo(p):
+        print("  p no es primo, intenta de nuevo.")
+        p = 0
+        continue
+
+    if p <= 122:
+        print("  p =", p, "es muy chico, necesitas que p sea mayor a 122. Intenta de nuevo.")
+
+#?con p ya fijo, buscamos alpha (raiz primitiva) y escogemos e al azar
+alpha = raiz_primitiva(p)
+e = random.randint(2, p - 2)  #?exponente secreto, esto NUNCA se comparte
+a = cuadrados_sucesivos(alpha, e, p)  #?a = alpha^e mod p
+
+print("")
+print("p =", p)
+print("alpha =", alpha)
+print("a =", a)
+print("")
+print("Dale esto al cliente para que cifre -> p =", p, " alpha =", alpha, " a =", a)
+print("(Tu exponente secreto e =", e, " NO se lo des a nadie)")
+print("")
+
+#?recibir el mensaje cifrado (el cliente te lo pasa, tu lo escribes aqui)
+gamma = int(input("Escribe gamma: "))
+entrada = input("Escribe los bloques del mensaje cifrado separados por espacios: ")
+bloques = entrada.split()
+
+#?gamma^(-e) = gamma^(p-1-e) (mod p), gracias al pequeño teorema de Fermat
+#?(por eso aqui NO hace falta el algoritmo de Euclides extendido, como si
+#?se necesito en RSA para encontrar d)
+gamma_inv_e = cuadrados_sucesivos(gamma, p - 1 - e, p)
+
+#?descifrado: cada bloque es un numero beta cifrado, o una letra "L" seguida
+#?del caracter que viajo sin cifrar (numeros, signos, etc.)
+descifrado = ""
+for bloque in bloques:
+    if bloque[0] == "L":
+        descifrado = descifrado + bloque[1:]
     else:
-        print("Opcion invalida.")
+        beta = int(bloque)
+        b = (gamma_inv_e * beta) % p  #?recupera el codigo ASCII original
+        descifrado = descifrado + chr(b)
 
-
-if __name__ == "__main__":
-    menu()
+print("Mensaje descifrado:", descifrado)
