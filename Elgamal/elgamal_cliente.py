@@ -29,16 +29,23 @@ a = int(input("Ingresa a (clave publica): "))
 
 mensaje = input("Escribe el mensaje a cifrar: ")
 
-k = random.randint(1, p - 2)  #?numero aleatorio secreto, se usa una sola vez y se descarta
-gamma = cuadrados_sucesivos(alpha, k, p)  #?gamma = alpha^k mod p, se manda una sola vez para todo el mensaje
-a_k = cuadrados_sucesivos(a, k, p)  #?a^k mod p, se reutiliza para cifrar cada letra del mensaje
-
+#!IMPORTANTE: antes usabamos un solo k (y un solo gamma) para TODO el
+#!mensaje. El problema es que, si la letra se repite, siempre da el mismo
+#!numero cifrado (por ejemplo la "a" siempre salia como el mismo beta), y
+#!eso deja ver patrones del mensaje aunque este cifrado. Por eso ahora se
+#!escoge un k nuevo para CADA letra, asi la misma letra repetida da un
+#!numero cifrado distinto cada vez.
 bloques = []
 for letra in mensaje:
     if es_letra(letra):
+        k = random.randint(1, p - 2)  #?numero aleatorio secreto, distinto para cada letra
+        gamma = cuadrados_sucesivos(alpha, k, p)  #?gamma = alpha^k mod p
+        a_k = cuadrados_sucesivos(a, k, p)  #?a^k mod p
+
         b = ord(letra)  #?el bloque es directamente el codigo ASCII de la letra o el espacio
         beta = (a_k * b) % p
-        bloques.append(str(beta))
+
+        bloques.append(str(gamma) + "," + str(beta))
     else:
         bloques.append("L" + letra)  #?caracter que no es letra ni espacio, viaja sin cifrar
 
@@ -48,5 +55,4 @@ for bloque in bloques:
 
 print("")
 print("Mensaje cifrado, dale esto al propietario:")
-print("gamma =", gamma)
 print(texto)

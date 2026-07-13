@@ -29,13 +29,15 @@ def criba_eratostenes(limite):
     return primos
 
 
-def es_primo(numero):
-    #? Comprobamos si 'numero' es primo generando la Criba de Eratostenes
-    #? hasta ese numero y viendo si quedo en la lista de primos.
-    if numero < 2:
-        return False
-    primos = criba_eratostenes(numero)
-    return numero in primos
+def primo_aleatorio(minimo, maximo):
+    #? Genera la Criba de Eratostenes hasta 'maximo', se queda solo con los
+    #? primos que caen dentro de [minimo, maximo], y escoge uno al azar.
+    primos = criba_eratostenes(maximo)
+    primos_en_rango = []
+    for numero in primos:
+        if numero >= minimo:
+            primos_en_rango.append(numero)
+    return random.choice(primos_en_rango)
 
 
 def factorizar(numero):
@@ -90,19 +92,11 @@ def raiz_primitiva(p):
     return None
 
 
-#?elegir el primo p (parte de la clave publica). Tiene que ser mayor a 122,
-#?que es el codigo ASCII de 'z', la letra mas alta que vamos a cifrar
-p = 0
-while p <= 122:
-    p = int(input("Ingresa un numero primo p (mayor a 122): "))
-
-    if not es_primo(p):
-        print("  p no es primo, intenta de nuevo.")
-        p = 0
-        continue
-
-    if p <= 122:
-        print("  p =", p, "es muy chico, necesitas que p sea mayor a 122. Intenta de nuevo.")
+#?elegimos el primo p SOLO, sin pedirselo al usuario. Tiene que ser mayor a
+#?122 (el codigo ASCII de 'z', la letra mas alta que ciframos); usamos un
+#?rango de 1000 a 5000 para que la criba y la busqueda de raiz primitiva
+#?sean rapidas pero el numero ya no sea tan chico
+p = primo_aleatorio(1000, 5000)
 
 #?con p ya fijo, buscamos alpha (raiz primitiva) y escogemos e al azar
 alpha = raiz_primitiva(p)
@@ -118,24 +112,27 @@ print("Dale esto al cliente para que cifre -> p =", p, " alpha =", alpha, " a ="
 print("(Tu exponente secreto e =", e, " NO se lo des a nadie)")
 print("")
 
-#?recibir el mensaje cifrado (el cliente te lo pasa, tu lo escribes aqui)
-gamma = int(input("Escribe gamma: "))
+#?recibir el mensaje cifrado (el cliente te lo pasa, tu lo escribes aqui).
+#?Ahora cada bloque cifrado trae SU PROPIO gamma, por eso ya no se pide un
+#?gamma unico al principio (ver el comentario en el cliente del porque)
 entrada = input("Escribe los bloques del mensaje cifrado separados por espacios: ")
 bloques = entrada.split()
 
-#?gamma^(-e) = gamma^(p-1-e) (mod p), gracias al pequeño teorema de Fermat
-#?(por eso aqui NO hace falta el algoritmo de Euclides extendido, como si
-#?se necesito en RSA para encontrar d)
-gamma_inv_e = cuadrados_sucesivos(gamma, p - 1 - e, p)
-
-#?descifrado: cada bloque es un numero beta cifrado, o una letra "L" seguida
-#?del caracter que viajo sin cifrar (numeros, signos, etc.)
+#?descifrado: cada bloque es "gamma,beta" (un par cifrado), o una letra "L"
+#?seguida del caracter que viajo sin cifrar (numeros, signos, etc.)
 descifrado = ""
 for bloque in bloques:
     if bloque[0] == "L":
         descifrado = descifrado + bloque[1:]
     else:
-        beta = int(bloque)
+        gamma_texto, beta_texto = bloque.split(",")
+        gamma = int(gamma_texto)
+        beta = int(beta_texto)
+
+        #?gamma^(-e) = gamma^(p-1-e) (mod p), gracias al pequeño teorema de
+        #?Fermat (por eso aqui NO hace falta el algoritmo de Euclides
+        #?extendido, como si se necesito en RSA para encontrar d)
+        gamma_inv_e = cuadrados_sucesivos(gamma, p - 1 - e, p)
         b = (gamma_inv_e * beta) % p  #?recupera el codigo ASCII original
         descifrado = descifrado + chr(b)
 
