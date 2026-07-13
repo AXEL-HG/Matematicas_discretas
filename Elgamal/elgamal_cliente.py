@@ -1,5 +1,4 @@
 """
---------------------
 Este es el programa de la persona B ("el cliente") 
 """
 
@@ -17,7 +16,7 @@ ARCHIVO_MENSAJE_CIFRADO = "mensaje_cifrado.json"
 
 
 def encriptar_mensaje(mensaje, p, alpha, a):
-    """Implementa el paso 2 del libro (ii y iii)."""
+
     #? ii. k aleatorio, 1 <= k <= p-2, y gamma = alpha^k (mod p)
     k = secrets.randbelow(p - 2) + 1
     gamma = pow(alpha, k, p)

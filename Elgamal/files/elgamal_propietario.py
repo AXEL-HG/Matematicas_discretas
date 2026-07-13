@@ -4,21 +4,6 @@ elgamal_propietario.py
 Este es el programa de la persona A ("el propietario"):
 quien desea RECIBIR mensajes cifrados.
 
-  A elige un primo (grande) p, una raíz primitiva alpha de p y un
-  exponente e con 1 <= e <= p-1, y calcula a := alpha^e (mod p).
-    - La clave pública es (p, alpha, a)  -> se publica/comparte
-    - La parte secreta es el exponente e -> NUNCA se comparte
-
-Y en el paso 3, para desencriptar un mensaje recibido E(b) = (gamma, beta):
-    gamma^(-e) := gamma^(p-1-e) (mod p)
-    b := gamma^(-e) * beta (mod p)
-
-Uso:
-    1) Ejecutar este script una vez para generar las claves
-       (crea clave_publica.json y clave_privada.json).
-    2) Compartir clave_publica.json con el cliente (elgamal_cliente.py).
-    3) Cuando el cliente genere mensaje_cifrado.json, volver a ejecutar
-       este script (opción 2) para desencriptarlo.
 """
 
 from elgamal_comun import (
@@ -38,9 +23,9 @@ ARCHIVO_MENSAJE_CIFRADO = "mensaje_cifrado.json"
 
 def generar_claves():
     """Paso 1 del libro: genera (p, alpha, a) públicos y e secreto."""
-    # p debe ser mayor que TAM_ALFABETO (52) para que cada bloque b < p.
-    # Usamos un rango moderado para que el ejemplo corra rápido; para uso
-    # real se usaría un primo mucho más grande.
+    #? p debe ser mayor que TAM_ALFABETO (52) para que cada bloque b < p.
+    #? Usamos un rango moderado para que el ejemplo corra rápido; para uso
+    #? real se usaría un primo mucho más grande.
     p = primo_aleatorio(1000, 5000)
     alpha = raiz_primitiva(p)
     e = secrets_randbelow_1_a_pmenos1(p)
@@ -66,6 +51,7 @@ def secrets_randbelow_1_a_pmenos1(p):
 
 
 def desencriptar_mensaje():
+    """Paso 3 del libro: usa la clave secreta e para desencriptar."""
     try:
         clave_publica = leer_json(ARCHIVO_CLAVE_PUBLICA)
         clave_privada = leer_json(ARCHIVO_CLAVE_PRIVADA)
@@ -78,6 +64,7 @@ def desencriptar_mensaje():
     e = clave_privada["e"]
     gamma = cifrado["gamma"]
 
+    #? gamma^(-e) = gamma^(p-1-e) (mod p)   -- fórmula exacta del libro
     gamma_inv_e = pow(gamma, p - 1 - e, p)
 
     texto_plano = []

@@ -1,54 +1,47 @@
 """
-Funciones compartidas por el PROPIETARIO (quien recibe mensajes) y el
-CLIENTE (quien los envía)
-Alfabeto usado (códigos):
-    A=0, B=1, ..., Z=25    (mayúsculas)
-    a=26, b=27, ..., z=51  (minúsculas)
-    espacio = 99
+
+Alfabeto usado (52 símbolos, códigos 0..51):
+    A=0, B=1, ..., Z=25   (mayúsculas)
+    a=26, b=27, ..., z=51 (minúsculas)
 """
 
 import json
 import secrets
 
 # ---------------------------------------------------------------------
-#? 1) Codificación letra <-> número (solo A-Z, a-z, y el espacio)
+# 1) Codificación letra <-> número (solo A-Z y a-z)
 # ---------------------------------------------------------------------
 
-TAM_ALFABETO = 52   #? 26 mayúsculas + 26 minúsculas
-CODIGO_ESPACIO = 99  #? código fijo asignado al espacio (' ')
+TAM_ALFABETO = 52  # 26 mayúsculas + 26 minúsculas
 
 
 def es_letra(c):
-    """True si c es una letra A-Z, a-z, o el espacio (' ')."""
-    return ('A' <= c <= 'Z') or ('a' <= c <= 'z') or c == ' '
+    """True si c es una letra A-Z o a-z (sin incluir Ñ/ñ ni acentos)."""
+    return ('A' <= c <= 'Z') or ('a' <= c <= 'z')
 
 
 def letra_a_codigo(c):
-    """Convierte una letra (o el espacio) en su código numérico:
-    A-Z -> 0..25, a-z -> 26..51, ' ' -> 99 (CODIGO_ESPACIO)."""
-    if c == ' ':
-        return CODIGO_ESPACIO
-    elif 'A' <= c <= 'Z':
-        return ord(c) - ord('A')          #? 0..25
+    """Convierte una letra en un entero 0..51, como la tabla del libro
+    (p. 56) pero extendida con minúsculas."""
+    if 'A' <= c <= 'Z':
+        return ord(c) - ord('A')          # 0..25
     elif 'a' <= c <= 'z':
-        return ord(c) - ord('a') + 26     # ?26..51
-    raise ValueError(f"'{c}' no es una letra A-Z/a-z ni el espacio")
+        return ord(c) - ord('a') + 26     # 26..51
+    raise ValueError(f"'{c}' no es una letra A-Z/a-z")
 
 
 def codigo_a_letra(n):
-    """Convierte un código numérico de vuelta a su letra (o espacio)."""
-    if n == CODIGO_ESPACIO:
-        return ' '
-    elif 0 <= n <= 25:
+    """Convierte un entero 0..51 de vuelta a su letra."""
+    if 0 <= n <= 25:
         return chr(n + ord('A'))
     elif 26 <= n <= 51:
         return chr(n - 26 + ord('a'))
-    raise ValueError(f"Código {n} no reconocido")
+    raise ValueError(f"Código {n} fuera de rango 0..51")
 
 
 # ---------------------------------------------------------------------
-#? 2) Primalidad, primos y raíces primitivas
-# 
+# 2) Primalidad, primos y raíces primitivas
+#    (necesarios para el paso 1 del criptosistema: p, alpha, e)
 # ---------------------------------------------------------------------
 
 def es_primo(n, k=20):
@@ -83,12 +76,9 @@ def es_primo(n, k=20):
 
 def primo_aleatorio(minimo, maximo):
     """Busca al azar un primo p en el rango [minimo, maximo].
-    Debe cumplir p > CODIGO_ESPACIO (=99), que es el código más alto
-    que se usa, para que cada bloque b < p."""
+    Debe cumplir p > TAM_ALFABETO (=52) para que cada bloque b < p."""
     if maximo <= minimo:
         raise ValueError("El rango dado es inválido")
-    if minimo <= CODIGO_ESPACIO:
-        raise ValueError(f"minimo debe ser mayor que {CODIGO_ESPACIO}")
     while True:
         candidato = secrets.randbelow(maximo - minimo) + minimo
         if candidato % 2 == 0:
@@ -129,7 +119,7 @@ def raiz_primitiva(p):
 
 
 # ---------------------------------------------------------------------
-#? 3) Guardar / leer archivos JSON usados para "comunicarse"
+# 3) Guardar / leer archivos JSON usados para "comunicarse"
 # ---------------------------------------------------------------------
 
 def guardar_json(datos, ruta):
