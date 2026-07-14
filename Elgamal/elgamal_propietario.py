@@ -103,11 +103,6 @@ alpha = raiz_primitiva(p)
 e = random.randint(2, p - 2)  #?exponente secreto, esto NUNCA se comparte
 a = cuadrados_sucesivos(alpha, e, p)  #?a = alpha^e mod p
 
-print("")
-print("p =", p)
-print("alpha =", alpha)
-print("a =", a)
-print("")
 print("Dale esto al cliente para que cifre -> p =", p, " alpha =", alpha, " a =", a)
 print("(Tu exponente secreto e =", e, " NO se lo des a nadie)")
 print("")
